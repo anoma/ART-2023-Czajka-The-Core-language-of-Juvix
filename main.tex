@@ -26,7 +26,7 @@ The main part of this report is a precise and abstract specification of the \Juv
 
 In this section, we provide a precise and abstract specification of \JuvixCore{}. We specify the syntax, evaluation semantics and the current optional type system.
 
-\subsection{Syntax}
+\subsection{Syntax}\label{sec_syntax}
 
 A \JuvixCore{} \emph{program}~$\Pc$ is a tuple $(f_m,\Fc,\Tc,\Ic)$ where:
 \begin{itemize}
@@ -97,7 +97,7 @@ We explain the above grammar point by point.
 
 We omit the standard definition of the set~$\FV(t)$ of variables free in~$t$. We treat terms up to $\alpha$-conversion. For brevity, we use vector and telescope notation, e.g., we write $\Pi \vec{\alpha} : \vec{\tau} . \sigma$ for $\Pi \alpha_1 : \tau_1 \ldots \Pi \alpha_n : \tau_n . \sigma$, and $\Pi \vec{\alpha} : \Type . \tau$ for $\Pi \alpha_1 : \Type \ldots \Pi \alpha_n : \Type . \tau$, and $\vec{\tau} \to \sigma$ for $\tau_1\to\ldots\to\tau_n\to\sigma$, and $\vec{t}$ for $t_1,\ldots,t_n$ or $t_1\ldots t_n$ depending on the context. By $|\vec{t}|$ we denote the length of the vector~$\vec{t}$.
 
-\subsection{Evaluation semantics}
+\subsection{Evaluation semantics}\label{sec_evaluation}
 
 \emph{Values}~$v \in \Vc$ are defined by the following grammar, where $t$ is an arbitrary term. Environments~$E$ are finite partial mappings from variables to values.
 \[
@@ -183,7 +183,7 @@ Additional requirements:
     The point with changing $x_i$ to $x_i \Dynamic$ and $t_i$ in $E'(x_i)$ to $\lambda \_ . t_i'$, is to delay the evaluation of~$t_i$ in a closure, so that it can be used with other rules. For example, consider $t = \sletrec{x := {+}(3,4); y := x}{y}$. If we defined $E'(x) = \closure{E'}{{+}(3,4)}$, we would get $\eval{x}{E'}{\closure{E'}{{+}(3,4)}}$ and since $v_y = \closure{E'}{{+}(3,4)}$ is already a value, that would become the result of evaluating~$t$ (which is the result of evaluating~$y$ in $E[y:=v_y,x:=\ldots]$. With our approach we take $E'(x) = \closure{E'}{\lambda \_ . {+}(3,4)}$, and we have $\eval{x\Dynamic}{E'}{7}$ according to the rules.
 \end{itemize}
 
-\subsection{Type system}
+\subsection{Type system}\label{sec_type_system}
 
 \JuvixCore{} does not specify a single type system by itself. Instead, different type systems can be implemented on top of \JuvixCore{}. Evaluation does not depend on type information. All type annotations can be set to~$\Dynamic$ to represent an untyped program.
 
@@ -234,7 +234,7 @@ Additional requirements:
 
 \section{JuvixCore implementation}\label{sec_core_implementation}
 
-The \JuvixCore{} data structure is defined in the \texttt{Juvix.Compiler.Core.Language} and \texttt{Juvix.Compiler.Core.Language.Nodes} modules in the Juvix compiler sources.
+The \JuvixCore{} data structure is defined in the \texttt{Juvix.Compiler.Core.Language} and \texttt{Juvix.Compiler.Core.Language.Nodes} modules in the Juvix compiler sources. 
 
 \section{Juvix compilation pipeline}\label{sec_pipeline}
 
