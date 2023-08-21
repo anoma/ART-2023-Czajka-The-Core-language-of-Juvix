@@ -143,7 +143,7 @@ Evaluation rules:
 \infer[\mathrm{OP}]{\eval{\op(t_1,\ldots,t_n)}{E}{v}}{\eval{t_i}{E}{v_i}}\quad
 \infer{\eval{c(t_1,\ldots,t_n)}{E}{c(v_1,\ldots,v_n)}}{\eval{t_i}{E}{v_i}}
 \\ \\
-\infer{\eval{t_1 t_2}{E}{v'}}{\eval{t_1}{E}{\closure{E'}{\lambda x . t}} & \eval{t_2}{E}{v} & \eval{t}{E[x:=v]}{v'}} \quad
+\infer{\eval{t_1 t_2}{E}{v'}}{\eval{t_1}{E}{\closure{E'}{\lambda x . t}} & \eval{t_2}{E}{v} & \eval{t}{E'[x:=v]}{v'}} \quad
 \infer{\eval{\lambda x . t}{E}{\closure{E}{\lambda x . t}}}{}
 \\ \\
 \infer{\eval{\slet{x:\tau := t}{t'}}{E}{v'}}{\eval{t}{E}{v} & \eval{t'}{E[x:=v]}{v'}}\quad
@@ -234,13 +234,17 @@ Additional requirements:
 
 \section{JuvixCore implementation}\label{sec_core_implementation}
 
-The \JuvixCore{} data structure is defined in the \texttt{Juvix.Compiler.Core.Language} and \texttt{Juvix.Compiler.Core.Language.Nodes} modules in the Juvix compiler sources. The implementation follows closely the abstract definition of terms in Section~\ref{sec_syntax}.
+The \JuvixCore{} data structure is defined in the Juvix compiler sources in the \texttt{Juvix.Compiler.Core.Language} and \texttt{Juvix.Compiler.Core.Language.Nodes} modules. The implementation follows closely the abstract definition of terms in Section~\ref{sec_syntax}.
 
-In our treatment of binders we have eluded the issues with renaming and variable capture, working implicitly up to $\alpha$-conversion as is standard in textual presentation of lambda-calculi. In the implementation
+In our treatment of binders we have elided the issues with renaming and variable capture, working implicitly up to $\alpha$-conversion as is standard in textual presentations of lambda-calculi. In the implementation, we use de Bruijn indices to represent binders. The use of de Bruijn indices is common in implementations of dependently typed programming languages and proof assistants. The main advantage is that a de Bruijn representation enables direct manipulation of terms under binders, with overall linear time complexity for most term transformations. Alternative approaches require either repeated renaming of bound variables, substitution or abstraction of free symbols -- all of these are linear time operations which when performed repeatedly while processing a single term may result in quadratic runtime. A major disadvantage is that manipulating de Bruijn indices is error-prone. We try to mitigate this by implementing high-level recursors which fold or transform \JuvixCore{} terms while taking care of de Bruijn index adjustments under the hood.
 
-The \JuvixCore{}
+The \JuvixCore{} evaluator is implemented in the \texttt{Juvix.Compiler.Core.Evaluator} module. The evaluator directly implements the rules from Section~\ref{sec_evaluation}, using lists to represent environments. 
+
+Currently, no type checker is implemented for \JuvixCore{}. The \JuvixCore{} programs which are translations of Juvix front-end programs are assumed to be well-typed in the type system of Section~\ref{sec_type_system}, but this is not checked. The module \texttt{Juvix.Compiler.Core.Transformation.ComputeTypeInfo} implements type inference for already well-typed terms.
 
 \section{Juvix compilation pipeline}\label{sec_pipeline}
+
+
 
 \section{Comparison with other languages}\label{sec_comparison}
 
