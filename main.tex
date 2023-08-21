@@ -127,7 +127,6 @@ A value~$v$ can be mapped injectively to a term~$v^*$ as follows:
 \item $\closure{E}{t}^* = E^*(t)$ where $E^*$ is the homomorphic extension of the mapping $x \mapsto E(x)^*$, avoiding variable capture,
 \item $\Type_n^* = \Type_n$, $\Int^* = \Int$, $\String^* = \String$, $\Dynamic^* = \Dynamic$,
 \item $I(v_1,\ldots,v_n)^* = I(v_1^*,\ldots,v_n^*)$.
-
 \end{itemize}
 
 We define the evaluation relation $\eval{t}{E}{r}$ in the style of big-step operational semantics (see~\cite{concrete-semantics}), where $t$ is a term, $E$ is an environment compatible with~$t$, and $r \in \Vc \uplus \{\bot\}$ is either a value~$v$ or an error~$\bot$. The evaluation relation is implicitly parameterised by a fixed \JuvixCore{} program $\Pc = (f_m, \Fc, \Tc, \Ic)$. The evaluation strategy is eager (call-by-value).
@@ -138,7 +137,7 @@ Evaluation rules:
 \infer{\eval{x}{E}{E(x)}}{}\quad
 \infer{\eval{C}{E}{C}}{}\quad
 \infer{\eval{S}{E}{S}}{}\quad
-\infer{\eval{f}{E}{r}}{\eval{\Fc(f)}{E}{r}}
+\infer{\eval{f}{E}{r}}{\eval{\Fc(f)}{\emptyset}{r}}
 \\ \\
 \infer[\mathrm{OP}]{\eval{\op(t_1,\ldots,t_n)}{E}{v}}{\eval{t_i}{E}{v_i}}\quad
 \infer{\eval{c(t_1,\ldots,t_n)}{E}{c(v_1,\ldots,v_n)}}{\eval{t_i}{E}{v_i}}
@@ -234,7 +233,7 @@ Additional requirements:
 
 \section{JuvixCore implementation}\label{sec_core_implementation}
 
-The \JuvixCore{} data structure is defined in the Juvix compiler sources in the \texttt{Juvix.Compiler.Core.Language} and \texttt{Juvix.Compiler.Core.Language.Nodes} modules. The implementation follows closely the abstract definition of terms in Section~\ref{sec_syntax}.
+The \JuvixCore{} data structure is defined in the Juvix compiler sources in the \texttt{Juvix.Compiler.Core.Language} and \texttt{Juvix.Compiler.Core.Language.Nodes} modules. The implementation follows closely the abstract definition of terms in Section~\ref{sec_syntax}. \JuvixCore{} programs $\Pc = (f_m,\Fc,\Tc,\Ic)$, which specify function bodies and inductive type constructors, are represented by the \texttt{InfoTable} data structure from the \texttt{Juvix.Compiler.Core.Data.InfoTable} module.
 
 In our treatment of binders we have elided the issues with renaming and variable capture, working implicitly up to $\alpha$-conversion as is standard in textual presentations of lambda-calculi. In the implementation, we use de Bruijn indices to represent binders. The use of de Bruijn indices is common in implementations of dependently typed programming languages and proof assistants. The main advantage is that a de Bruijn representation enables direct manipulation of terms under binders, with overall linear time complexity for most term transformations. Alternative approaches require either repeated renaming of bound variables, substitution or abstraction of free symbols -- all of these are linear time operations which when performed repeatedly while processing a single term may result in quadratic runtime. A major disadvantage is that manipulating de Bruijn indices is error-prone. We try to mitigate this by implementing high-level recursors which fold or transform \JuvixCore{} terms while taking care of de Bruijn index adjustments under the hood.
 
@@ -244,10 +243,40 @@ Currently, no type checker is implemented for \JuvixCore{}. The \JuvixCore{} pro
 
 \section{Juvix compilation pipeline}\label{sec_pipeline}
 
+The \JuvixCore{} language is an intermediate language to which the Juvix front-end language desugars. There are, in fact, several different variants of \JuvixCore{} in the actual implementation. The variant we presented in Section~\ref{sec_specification} is suitable for evaluation, with pattern matching already compiled to case-expressions. This form of the \JuvixCore{} language corresponds to the Core data structures after performing the \texttt{toEvalTransformations} (see module \texttt{Juvix.Compiler.Core.Data.TransformationId}), which is the point at which the pipelines for different backends split.
 
+Below we present an overview of the Juvix compiler pipeline.
+
+\[
+\xymatrix{
+& & & & & & \text{WASM} \\
+& & & & & \text{JuvixAsm} \ar[ur] \ar[r] & \text{native} \\
+\text{Parsing} \ar[r] & \text{Scoping} \ar[r] & \text{Type checking} \ar[r] & \text{Desugaring} \ar[r] & \text{\texttt{toEval}} \ar[r] & \text{\JuvixCore{}} \ar[u] \ar[r] \ar[dr] & \Geb \\
+& & & & & & \VampIR
+}
+\]
 
 \section{Comparison with other languages}\label{sec_comparison}
 
+
+\vspace*{2mm}
+\begin{minipage}[b]{\hsize}\centering
+
+\begin{tabular}{lllll}
+\hline
+\textbf{Feature} & \textbf{\Juvix{}} & \textbf{\JuvixCore{}} & \textbf{Haskell} & \textbf{OCaml} \\ \hline
+Algebraic data types  &  Yes   &  Yes   &  Yes  & Yes \\
+GADTs  &  No   &  Yes   &  Yes &  Yes  \\
+Prenex polymorphism  &  Yes   &  Yes &  Yes  &  Yes \\
+Higher-rank polymorphism  &  Some   &  Yes   &  Yes  &   No  \\
+Type classes  &  No   &  No   &  Yes &   No \\
+Modules  &  Yes   &  No   &  Yes &   Yes \\
+Parameterised modules  &  No   &  No   &  No &   Yes \\
+Eager evaluation  &  Yes   &  Yes   &  Yes &   Yes \\
+Exceptions &  No   &  No\footnote{The \texttt{fail} \JuvixCore{} operation aborts the program }   &  Yes\footnote{}  &  Yes \\
+\hline
+\end{tabular}
+\end{minipage}
 
 
 \section*{Acknowledgements}

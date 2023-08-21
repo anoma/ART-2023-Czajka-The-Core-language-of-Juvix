@@ -232,6 +232,7 @@
 \usetikzlibrary{svg.path}                     % TIKZ svg paths
 \usetikzlibrary{calc}                         % TIKZ calculations
 \RequirePackage[framemethod=tikz]{mdframed}   % breakable framed and coloured boxes
+\RequirePackage{xypic}
 
 %% Set document color scheme
 \RequirePackage{xcolor}                       % driver indepentent color extensions
