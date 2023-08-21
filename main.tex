@@ -249,14 +249,14 @@ The \JuvixCore{} language is an intermediate language to which the Juvix front-e
 
 Below we present an overview of the Juvix compiler pipeline.
 
-\[
-\xymatrix{
-& & & & & & \text{WASM} \\
-& & & & & \text{JuvixAsm} \ar[ur] \ar[r] & \text{native} \\
-\text{Parsing} \ar[r] & \text{Scoping} \ar[r] & \text{Type checking} \ar[r] & \text{Desugaring} \ar[r] & \text{\texttt{toEval}} \ar[r] & \text{\JuvixCore{}} \ar[u] \ar[r] \ar[dr] & \Geb \\
-& & & & & & \VampIR
-}
-\]
+% \[
+% \xymatrix{
+% & & & & & & \text{WASM} \\
+% & & & & & \text{JuvixAsm} \ar[ur] \ar[r] & \text{native} \\
+% \text{Parsing} \ar[r] & \text{Scoping} \ar[r] & \text{Type checking} \ar[r] & \text{Desugaring} \ar[r] & \text{\texttt{toEval}} \ar[r] & \text{\JuvixCore{}} \ar[u] \ar[r] \ar[dr] & \Geb \\
+% & & & & & & \VampIR
+% }
+% \]
 
 \section{Comparison with other languages}\label{sec_comparison}
 
