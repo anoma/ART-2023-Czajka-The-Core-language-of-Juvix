@@ -155,8 +155,8 @@ Evaluation rules:
 \\ \\
 \infer{\eval{\Type_n}{E}{\Type_n}}{}\quad
 \infer{\eval{\Int}{E}{\Int}}{}\quad
-\infer{\eval{\Int}{E}{\String}}{}\quad
-\infer{\eval{\Int}{E}{\Dynamic}}{}
+\infer{\eval{\String}{E}{\String}}{}\quad
+\infer{\eval{\Dynamic}{E}{\Dynamic}}{}
 \\ \\
 \infer{\eval{\Pi x : \tau . \tau'}{E}{\closure{E}{\Pi x : \tau . \tau'}}}{}\quad
 \infer{\eval{I(t_1,\ldots,t_n)}{E}{I(v_1,\ldots,v_n)}}{\eval{t_i}{E}{v_i}}
