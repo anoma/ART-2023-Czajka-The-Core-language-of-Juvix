@@ -239,7 +239,9 @@ In our treatment of binders we have elided the issues with renaming and variable
 
 The \JuvixCore{} evaluator is implemented in the \texttt{Juvix.Compiler.Core.Evaluator} module. The evaluator directly implements the rules from Section~\ref{sec_evaluation}, using lists to represent environments. 
 
-Currently, no type checker is implemented for \JuvixCore{}. The \JuvixCore{} programs which are translations of Juvix front-end programs are assumed to be well-typed in the type system of Section~\ref{sec_type_system}, but this is not checked. The module \texttt{Juvix.Compiler.Core.Transformation.ComputeTypeInfo} implements type inference for already well-typed terms.
+Currently, no type checker is implemented for \JuvixCore{}. Those \JuvixCore{} programs which are translations of Juvix front-end programs are assumed to be well-typed in the type system of Section~\ref{sec_type_system}. This is guaranteed by the desugaring process but not checked separately. The module \texttt{Juvix.Compiler.Core.Transformation.ComputeTypeInfo} implements type inference for already well-typed terms.
+
+\JuvixCore{} programs can be parsed and evaluated by the Juvix compiler directly, either from \texttt{*.jvc} files (\texttt{juvix dev core eval}) or via the \JuvixCore{} REPL (\texttt{juivx dev core repl}). See the \texttt{tests/Core/positive} directory in the Juvix compiler sources for examples of \texttt{*.jvc} files and the concrete \JuvixCore{} syntax.
 
 \section{Juvix compilation pipeline}\label{sec_pipeline}
 
@@ -258,6 +260,7 @@ Below we present an overview of the Juvix compiler pipeline.
 
 \section{Comparison with other languages}\label{sec_comparison}
 
+In the table below we provide a short comparison of language features supported by Juvix, \JuvixCore{}, Haskell and OCaml. In the case of \JuvixCore{}, which does not specify a single type system, the ``Yes'' entries in the rows for polymorphism and data types mean that programs using these features can be directly represented in \JuvixCore{}, not that type checking of such programs is performed by the current \JuvixCore{} implementation.
 
 \vspace*{2mm}
 \begin{minipage}[b]{\hsize}\centering
@@ -268,12 +271,14 @@ Below we present an overview of the Juvix compiler pipeline.
 Algebraic data types  &  Yes   &  Yes   &  Yes  & Yes \\
 GADTs  &  No   &  Yes   &  Yes &  Yes  \\
 Prenex polymorphism  &  Yes   &  Yes &  Yes  &  Yes \\
-Higher-rank polymorphism  &  Some   &  Yes   &  Yes  &   No  \\
+Higher-rank polymorphism  &  Some   &  Yes   &  Yes\footnote{with the \texttt{RankNTypes} extension}  &   No  \\
+Hindley-Milner type inference & No & No & Yes & Yes \\
 Type classes  &  No   &  No   &  Yes &   No \\
 Modules  &  Yes   &  No   &  Yes &   Yes \\
 Parameterised modules  &  No   &  No   &  No &   Yes \\
-Eager evaluation  &  Yes   &  Yes   &  Yes &   Yes \\
-Exceptions &  No   &  No\footnote{The \texttt{fail} \JuvixCore{} operation aborts the program }   &  Yes\footnote{}  &  Yes \\
+Eager evaluation  &  Yes   &  Yes   &  Yes\footnote{via strictness annotations} &   Yes \\
+Lazy evaluation  &  No  &  No &  Yes &   Yes\footnote{via the \texttt{Lazy.t} type} \\
+Metaprogramming  &  No   &  No   &  Yes\footnote{via Template Haskell} &  Yes\footnote{via PPXs} \\
 \hline
 \end{tabular}
 \end{minipage}
@@ -281,6 +286,7 @@ Exceptions &  No   &  No\footnote{The \texttt{fail} \JuvixCore{} operation abort
 
 \section*{Acknowledgements}
 
+The author thanks the entire Juvix team, including Jonathan Prieto-Cubides, Jan Mas Rovira and Paul Cadman. The initial design and preliminary implementation of \JuvixCore{} were by the author, but subsequent discussions with the rest of the Juvix team had a decisive impact on the final form of \JuvixCore{} presented in this report.
 
 \nocite{*}
 \bibliography{ref.bib}
