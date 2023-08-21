@@ -232,7 +232,6 @@
 \usetikzlibrary{svg.path}                     % TIKZ svg paths
 \usetikzlibrary{calc}                         % TIKZ calculations
 \RequirePackage[framemethod=tikz]{mdframed}   % breakable framed and coloured boxes
-\RequirePackage{xypic}
 
 %% Set document color scheme
 \RequirePackage{xcolor}                       % driver indepentent color extensions
@@ -344,7 +343,10 @@
     % numbers,                % numbers as references
     merge,                  % merge multiple references in one
     % super,                  % superscript
-    sort&compress
+    sort&compress,
+    round,                  % parentheses around year
+    semicolon,              % separate references with semicolon
+    nonamebreak,           % keep authors on the same line
 ]{natbib}
 
 % Moves references after punctuation
@@ -354,16 +356,7 @@
 % Bibliography style
 %% No separation between references
 \setlength{\bibsep}{0.0pt}
-%% Use ART-bib.bst as a style (if available) else fall back to unsrtnat
-\IfFileExists{templates/ART/ART-bib.bst}{
-  \bibliographystyle{templates/ART/ART-bib}
-}{
-  \IfFileExists{ART-bib.bst}{
-  \bibliographystyle{ART-bib}
-  }{
-    \PackageWarning{ART-bib}{templates/ART/ART-bib.bst not found; must specify manually}
-    \bibliographystyle{unsrt}
-}}
+\bibliographystyle{unsrtnat}
 %% set Bibliography font
 \renewcommand\bibfont{\normalfont\sffamily\fontsize{6}{8}\selectfont}
 %% Use "References" as bibliography title
@@ -376,7 +369,12 @@
 \renewcommand\@biblabel[1]{ #1.}
 
 % Footnotes
-\RequirePackage[flushmargin,ragged,symbol*]{footmisc}
+\RequirePackage[%
+    flushmargin        % This option makes footnotes align with the margin.
+  , ragged             % This option sets the footnote text to be left-aligned.
+  % , symbol*          % This option changes the symbols used for
+                       % footnotes. Instead of numbers, symbols like *, †, ‡, etc., will be used
+]{footmisc}
 \renewcommand*{\footnotelayout}{\footnotefont}
 \renewcommand{\footnoterule}{% Set the footnote hrule style
   \kern -3pt
@@ -394,11 +392,24 @@
 \RequirePackage[
   colorlinks=true,
   allcolors=anoma,
-  pagebackref=false
+  pagebackref=true,
 ]{hyperref}
 
 \PassOptionsToPackage{unicode}{hyperref}
 \PassOptionsToPackage{naturalnames}{hyperref}
+\RequirePackage{hypernat}
+\RequirePackage{backref}
+
+% Backref settings
+\renewcommand*{\backref}[1]{}
+\renewcommand*{\backrefalt}[4]{{%
+    \ifcase #1 %
+          \or (cit. on p.~#2.)%
+          \else (cit. on pp. #2.)%
+    \fi%
+    }}
+% https://tex.stackexchange.com/questions/183702/formatting-back-references-in-bibliography-bibtex
+
 %% Set URL link color & font
 \renewcommand\UrlFont{\color{anoma}\sffamily}
 
