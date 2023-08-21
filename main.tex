@@ -1,17 +1,17 @@
-\documentclass[final]{msc}
+\documentclass[
+    9pt,            % 8-20pt possible
+    techreport,        % select between  ``techreport'', ``report'', ``article'', ``commun'', ``persp'' and ``review''
+    affiltop,       % switch, put affiliations under authors (instead of footnote)
+    % draft,          % for quick compilations (no figures, references etc)
+]{art}
 
-\input{preambule}
+\input{metadata.tex}
+\input{macros.tex}
+
 \begin{document}
-\input{metadata}
 
-\begin{abstract}
-We describe \JuvixCore{} -- a minimalistic intermediate functional language to which Juvix desugars. We specify precisely and abstractly \JuvixCore{} syntax, evaluation semantics, and the current optional type system. We comment on the relationship between this specification and the actual implementation. We also explain the role \JuvixCore{} plays in the Juvix compilation pipeline. Finally, we compare the language features available in \JuvixCore{} with those in Juvix and other popular functional languages.
-\end{abstract}
-
-\begin{keywords}
-Juvix; functional programming; compilers
-\end{keywords}
 \maketitle
+\tableofcontents
 
 \section{Introduction}
 
@@ -247,6 +247,8 @@ The \JuvixCore{}
 
 
 \section*{Acknowledgements}
+
+
 \nocite{*}
 \bibliography{ref.bib}
 
