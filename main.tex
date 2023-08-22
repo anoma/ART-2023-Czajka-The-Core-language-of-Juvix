@@ -245,18 +245,18 @@ Currently, no type checker is implemented for \JuvixCore{}. Those \JuvixCore{} p
 
 \section{Juvix compilation pipeline}\label{sec_pipeline}
 
-The \JuvixCore{} language is an intermediate language to which the Juvix front-end language desugars. There are, in fact, several different variants of \JuvixCore{} in the actual implementation. The variant we presented in Section~\ref{sec_specification} is suitable for evaluation, with pattern matching already compiled to case-expressions. This form of the \JuvixCore{} language corresponds to the Core data structures after performing the \texttt{toEvalTransformations} (see module \texttt{Juvix.Compiler.Core.Data.TransformationId}), which is the point at which the pipelines for different backends split.
+The \JuvixCore{} language is an intermediate language to which the Juvix front-end language desugars. There are, in fact, several different variants of \JuvixCore{} in the actual implementation. The variant we presented in Section~\ref{sec_specification} is suitable for evaluation, with pattern matching already compiled to case-expressions. This form of the \JuvixCore{} language corresponds to the Core data structures after performing the \texttt{toEvalTransformations} transformations (see module \texttt{Juvix.Compiler.Core.Data.TransformationId}), which is the point at which the pipelines for different backends split.
 
 Below we present an overview of the Juvix compiler pipeline.
 
-% \[
-% \xymatrix{
-% & & & & & & \text{WASM} \\
-% & & & & & \text{JuvixAsm} \ar[ur] \ar[r] & \text{native} \\
-% \text{Parsing} \ar[r] & \text{Scoping} \ar[r] & \text{Type checking} \ar[r] & \text{Desugaring} \ar[r] & \text{\texttt{toEval}} \ar[r] & \text{\JuvixCore{}} \ar[u] \ar[r] \ar[dr] & \Geb \\
-% & & & & & & \VampIR
-% }
-% \]
+\[
+\xymatrix{
+& & & & & & \text{WASM} \\
+& & & & & \text{JuvixAsm} \ar[ur] \ar[r] & \text{native} \\
+\text{Parsing} \ar[r] & \text{Scoping} \ar[r] & \text{Type checking} \ar[r] & \text{Desugaring} \ar[r] & \text{\texttt{toEval}} \ar[r] & \text{\JuvixCore{}} \ar[u] \ar[r] \ar[dr] & \Geb \\
+& & & & & & \VampIR
+}
+\]
 
 \section{Comparison with other languages}\label{sec_comparison}
 
