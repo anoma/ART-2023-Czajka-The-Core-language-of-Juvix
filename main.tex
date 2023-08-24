@@ -15,34 +15,64 @@
 
 \section{Introduction}
 
-Juvix\footnote{\url{https://github.com/anoma/juvix}} is an open-source functional programming language designed for writing privacy-preserving decentralised applications. Using Juvix, developers can write high-level programs which can be compiled to WASM directly, or through \VampIR\footnote{\url{https://github.com/anoma/vamp-ir}} to circuits for private execution with Taiga\footnote{\url{https://github.com/anoma/taiga}} on Anoma\footnote{\url{https://anoma.net}} or Ethereum\footnote{\url{https://ethereum.org}}.
+Juvix\footnote{\url{https://github.com/anoma/juvix}} is an open-source
+functional programming language designed for writing privacy-preserving
+decentralised applications. Using Juvix, developers can write high-level
+programs which can be compiled to WASM directly, or through
+\VampIR\footnote{\url{https://github.com/anoma/vamp-ir}} to circuits for
+private execution with Taiga\footnote{\url{https://github.com/anoma/taiga}}
+on Anoma\footnote{\url{https://anoma.net}} or
+Ethereum\footnote{\url{https://ethereum.org}}.
 
-\JuvixCore{} is a minimalistic intermediate functional language to which Juvix desugars. The relationship between Juvix and \JuvixCore{} is similar to that between Haskell and Haskell Core. After parsing, scoping and type-checking, the Juvix front-end program representation is translated to \JuvixCore{} for further processing. Via different backends, \JuvixCore{} can be compiled to several targets: \Geb{}\footnote{\url{https://github.com/anoma/geb}}, \VampIR, WASM, native executable.
+\JuvixCore{} is a minimalistic intermediate functional language to which
+Juvix desugars. The relationship between Juvix and \JuvixCore{} is similar
+to that between Haskell and Haskell Core. After parsing, scoping and
+type-checking, the Juvix front-end program representation is translated to
+\JuvixCore{} for further processing. Via different backends, \JuvixCore{}
+can be compiled to several targets:
+\Geb{}\footnote{\url{https://github.com/anoma/geb}}, \VampIR, WASM, native
+executable.
 
-The main part of this report is a precise and abstract specification of the \JuvixCore{} language (Section~\ref{sec_specification}), including the evaluation semantics and the optional type system. Then, we discuss the implementation of \JuvixCore{} and its relation to the formal specification
-(Section~\ref{sec_core_implementation}). In Section~\ref{sec_pipeline}, we describe the Juvix compilation pipeline and the role of \JuvixCore{} in it. Finally, Section~\ref{sec_comparison} compares \JuvixCore{} language features with those of Juvix and other popular functional languages.
+The main part of this report is a precise and abstract specification of the
+\JuvixCore{} language (Section~\ref{sec_specification}), including the
+evaluation semantics and the optional type system. Then, we discuss the
+implementation of \JuvixCore{} and its relation to the formal specification
+(Section~\ref{sec_core_implementation}). In Section~\ref{sec_pipeline}, we
+describe the Juvix compilation pipeline and the role of \JuvixCore{} in it.
+Finally, Section~\ref{sec_comparison} compares \JuvixCore{} language
+features with those of Juvix and other popular functional languages.
 
 \section{JuvixCore specification}\label{sec_specification}
 
-In this section, we provide a precise and abstract specification of \JuvixCore{}. We specify the syntax, evaluation semantics and the current optional type system.
+In this section, we provide a precise and abstract specification of
+\JuvixCore{}. We specify the syntax, evaluation semantics and the current
+optional type system.
 
 \subsection{Syntax}\label{sec_syntax}
 
 A \JuvixCore{} \emph{program}~$\Pc$ is a tuple $(f_m,\Fc,\Tc,\Ic)$ where:
 \begin{itemize}
 \item $f_m$ is the main function symbol,
-\item $\Fc$ is a mapping from function symbols to closed terms that associates function symbols with corresponding function bodies,
-\item $\Tc$ is a mapping from function symbols to types that associates function symbols with the types of the corresponding functions,
+\item $\Fc$ is a mapping from function symbols to closed terms that
+associates function symbols with corresponding function bodies,
+\item $\Tc$ is a mapping from function symbols to types that associates
+function symbols with the types of the corresponding functions,
 \item $\Ic$ is a mapping from type symbols to inductive types.
 \end{itemize}
 An \emph{inductive type} is pair $(\tau_I,\Cc)$ where:
 \begin{itemize}
 \item $\tau_I$ is a type - the \emph{arity} of the inductive type,
-\item $\Cc$ is a nonempty finite set of constructor declarations $c_i : \tau_i$ where $c_i$ is a \emph{constructor} and~$\tau_i$ is its type.
+\item $\Cc$ is a nonempty finite set of constructor declarations $c_i :
+\tau_i$ where $c_i$ is a \emph{constructor} and~$\tau_i$ is its type.
 \end{itemize}
-The constructors are assumed to be unique and associated with exactly one inductive type. For brevity, we will often confuse inductive types with their corresponding type symbols. We write $c \in I$ or $(c : \tau) \in I$ to indicate that $c$ (of type~$\tau$) is a constructor in the inductive type~$I$.
+The constructors are assumed to be unique and associated with exactly one
+inductive type. For brevity, we will often confuse inductive types with
+their corresponding type symbols. We write $c \in I$ or $(c : \tau) \in I$
+to indicate that $c$ (of type~$\tau$) is a constructor in the inductive
+type~$I$.
 
-\emph{Terms}~$t,s,r$ are defined by the following grammar. The \emph{types}~$\tau,\sigma$ are just arbitrary terms.
+\emph{Terms}~$t,s,r$ are defined by the following grammar. The
+\emph{types}~$\tau,\sigma$ are just arbitrary terms.
 \[
 \begin{array}{rcl}
 t, s, r, \tau, \sigma &::=& x \\
@@ -71,9 +101,11 @@ We explain the above grammar point by point.
 \item $f$ is a function symbol.
 \item $C$ is an integer constant, e.g., $1$, $20$, $-5$.
 \item $S$ is a string constant, e.g., \verb|"abc"|, \verb|"hello world"|.
-\item $\op(t_1,\ldots,t_n)$ is a built-in operation application. Available built-in operations~$\op$:
+\item $\op(t_1,\ldots,t_n)$ is a built-in operation application. Available
+built-in operations~$\op$:
     \begin{itemize}
-    \item arithmetic operations on integers: $+$, $-$, $\cdot$, $\div$, $\mathrm{mod}$,
+    \item arithmetic operations on integers: $+$, $-$, $\cdot$, $\div$,
+    $\mathrm{mod}$,
     \item integer comparisons: $<$, $\le$,
     \item equality: $=$,
     \item string operations: show, concat, strToInt,
@@ -82,24 +114,50 @@ We explain the above grammar point by point.
     \end{itemize}
 \item $c(t_1,\ldots,t_n)$ is a constructor application.
 \item $t t'$ is an application of~$t$ to~$t'$.
-\item $\lambda x : \tau . t$ is a \emph{lambda-abstraction} (anonymous function).
-\item $\slet{x : \tau := t}{t'}$ is a non-recursive \emph{let-expression}. The variable~$x$ is bound in~$t'$ but not in~$t$ or~$\tau$.
-\item $\sletrec{\{x_1 : \tau_1 := t_1; \ldots; x_k : \tau_k := t_k\}}{t'}$ is a \emph{letrec-expression}, or a recursive let-expression. The variables $x_1,\ldots,x_k$ are bound in $t_1,\ldots,t_k,t'$, but not in $\tau_1,\ldots,\tau_k$.
-\item $\scase{t}{\{c_1(x_1,\ldots,x_{n_1}) \To t_1; \ldots; c_k(x_1,\ldots,x_{n_k}) \To t_k; \_ \To t'\}}$ is a \emph{case-expression}. The $c_1,\ldots,c_k$ are constructors of the same inductive type~$I$, and~$n_i$ is the number of arguments of~$c_i$. The last clause $\_ \To t'$ is the an optional \emph{default clause}.
-\item $\epsilon[\tau]$ is an error node of type~$\tau$. Evaluating $\epsilon[\tau]$ results in an error.
-\item $\Pi x : \tau . \tau'$ is a \emph{dependent function type}. We use the notation $\tau \to \tau'$ when $x\notin\FV(\tau')$.
-\item $\Type_n$ is a \emph{universe} for $n \in \Nbb$. We often drop the subscript in $\Type_0$, denoting it by $\Type$.
-\item $I(t_1,\ldots,t_n)$ is an inductive type application. The $t_1,\ldots,t_n$ are the parameters of the inductive type~$I$. The number and the types of parameters are determined by the arity of~$I$.
+\item $\lambda x : \tau . t$ is a \emph{lambda-abstraction} (anonymous
+function).
+\item $\slet{x : \tau := t}{t'}$ is a non-recursive \emph{let-expression}.
+The variable~$x$ is bound in~$t'$ but not in~$t$ or~$\tau$.
+\item $\sletrec{\{x_1 : \tau_1 := t_1; \ldots; x_k : \tau_k := t_k\}}{t'}$
+is a \emph{letrec-expression}, or a recursive let-expression. The variables
+$x_1,\ldots,x_k$ are bound in $t_1,\ldots,t_k,t'$, but not in
+$\tau_1,\ldots,\tau_k$.
+\item $\scase{t}{\{c_1(x_1,\ldots,x_{n_1}) \To t_1; \ldots;
+c_k(x_1,\ldots,x_{n_k}) \To t_k; \_ \To t'\}}$ is a \emph{case-expression}.
+The $c_1,\ldots,c_k$ are constructors of the same inductive type~$I$,
+and~$n_i$ is the number of arguments of~$c_i$. The last clause $\_ \To t'$
+is the an optional \emph{default clause}.
+\item $\epsilon[\tau]$ is an error node of type~$\tau$. Evaluating
+$\epsilon[\tau]$ results in an error.
+\item $\Pi x : \tau . \tau'$ is a \emph{dependent function type}. We use
+the notation $\tau \to \tau'$ when $x\notin\FV(\tau')$.
+\item $\Type_n$ is a \emph{universe} for $n \in \Nbb$. We often drop the
+subscript in $\Type_0$, denoting it by $\Type$.
+\item $I(t_1,\ldots,t_n)$ is an inductive type application. The
+$t_1,\ldots,t_n$ are the parameters of the inductive type~$I$. The number
+and the types of parameters are determined by the arity of~$I$.
 \item $\Int$ is the primitive type of integers.
 \item $\String$ is the primitive type of strings.
-\item $\Dynamic$ is the dynamic type which can be assigned to any term. This enables the implementation of gradual typing in \JuvixCore{}. See~\cite{gradual-typing}.
+\item $\Dynamic$ is the dynamic type which can be assigned to any term.
+This enables the implementation of gradual typing in \JuvixCore{}.
+See~\cite{gradual-typing}.
 \end{itemize}
 
-We omit the standard definition of the set~$\FV(t)$ of variables free in~$t$. We treat terms up to $\alpha$-conversion. For brevity, we use vector and telescope notation, e.g., we write $\Pi \vec{\alpha} : \vec{\tau} . \sigma$ for $\Pi \alpha_1 : \tau_1 \ldots \Pi \alpha_n : \tau_n . \sigma$, and $\Pi \vec{\alpha} : \Type . \tau$ for $\Pi \alpha_1 : \Type \ldots \Pi \alpha_n : \Type . \tau$, and $\vec{\tau} \to \sigma$ for $\tau_1\to\ldots\to\tau_n\to\sigma$, and $\vec{t}$ for $t_1,\ldots,t_n$ or $t_1\ldots t_n$ depending on the context. By $|\vec{t}|$ we denote the length of the vector~$\vec{t}$.
+We omit the standard definition of the set~$\FV(t)$ of variables free
+in~$t$. We treat terms up to $\alpha$-conversion. For brevity, we use
+vector and telescope notation, e.g., we write $\Pi \vec{\alpha} :
+\vec{\tau} . \sigma$ for $\Pi \alpha_1 : \tau_1 \ldots \Pi \alpha_n :
+\tau_n . \sigma$, and $\Pi \vec{\alpha} : \Type . \tau$ for $\Pi \alpha_1 :
+\Type \ldots \Pi \alpha_n : \Type . \tau$, and $\vec{\tau} \to \sigma$ for
+$\tau_1\to\ldots\to\tau_n\to\sigma$, and $\vec{t}$ for $t_1,\ldots,t_n$ or
+$t_1\ldots t_n$ depending on the context. By $|\vec{t}|$ we denote the
+length of the vector~$\vec{t}$.
 
 \subsection{Evaluation semantics}\label{sec_evaluation}
 
-\emph{Values}~$v \in \Vc$ are defined by the following grammar, where $t$ is an arbitrary term. Environments~$E$ are finite partial mappings from variables to values.
+\emph{Values}~$v \in \Vc$ are defined by the following grammar, where $t$
+is an arbitrary term. Environments~$E$ are finite partial mappings from
+variables to values.
 \[
 \begin{array}{rcl}
    v \in \Vc &::=&  C \\
@@ -114,8 +172,10 @@ We explain the above grammar point by point.
 \begin{itemize}
 \item $C$ is an integer constant.
 \item $S$ is a string constant.
-\item $c(v_1,\ldots,v_n)$ is a constructor application with value arguments.
-\item $\closure{E}{t}$ is a \emph{closure}. The environment~$E$ is required to be \emph{compatible} with~$t$, meaning that $\FV(t) \subseteq \dom(E)$.
+\item $c(v_1,\ldots,v_n)$ is a constructor application with value
+arguments.
+\item $\closure{E}{t}$ is a \emph{closure}. The environment~$E$ is required
+to be \emph{compatible} with~$t$, meaning that $\FV(t) \subseteq \dom(E)$.
 \item $\Type_n$ is a universe and $\Int$, $\String$, $\Dynamic$ are types.
 \item $I(v_1,\ldots,v_n)$ is an inductive type application.
 \end{itemize}
@@ -124,12 +184,19 @@ A value~$v$ can be mapped injectively to a term~$v^*$ as follows:
 \item $C^* = C$,
 \item $S^* = S$,
 \item $c(v_1,\ldots,v_n)^* = c(v_1^*,\ldots,v_n^*)$,
-\item $\closure{E}{t}^* = E^*(t)$ where $E^*$ is the homomorphic extension of the mapping $x \mapsto E(x)^*$, avoiding variable capture,
-\item $\Type_n^* = \Type_n$, $\Int^* = \Int$, $\String^* = \String$, $\Dynamic^* = \Dynamic$,
+\item $\closure{E}{t}^* = E^*(t)$ where $E^*$ is the homomorphic extension
+of the mapping $x \mapsto E(x)^*$, avoiding variable capture,
+\item $\Type_n^* = \Type_n$, $\Int^* = \Int$, $\String^* = \String$,
+$\Dynamic^* = \Dynamic$,
 \item $I(v_1,\ldots,v_n)^* = I(v_1^*,\ldots,v_n^*)$.
 \end{itemize}
 
-We define the evaluation relation $\eval{t}{E}{r}$ in the style of big-step operational semantics (see~\cite{concrete-semantics}), where $t$ is a term, $E$ is an environment compatible with~$t$, and $r \in \Vc \uplus \{\bot\}$ is either a value~$v$ or an error~$\bot$. The evaluation relation is implicitly parameterised by a fixed \JuvixCore{} program $\Pc = (f_m, \Fc, \Tc, \Ic)$. The evaluation strategy is eager (call-by-value).
+We define the evaluation relation $\eval{t}{E}{r}$ in the style of big-step
+operational semantics (see~\cite{concrete-semantics}), where $t$ is a term,
+$E$ is an environment compatible with~$t$, and $r \in \Vc \uplus \{\bot\}$
+is either a value~$v$ or an error~$\bot$. The evaluation relation is
+implicitly parameterised by a fixed \JuvixCore{} program $\Pc = (f_m, \Fc,
+\Tc, \Ic)$. The evaluation strategy is eager (call-by-value).
 
 Evaluation rules:
 \[
@@ -167,7 +234,10 @@ Evaluation rules:
 
 Additional requirements:
 \begin{itemize}
-\item Rule OP: $n$ is the arity of the operation~$\op$, the types of the values $v_1,\ldots,v_n$ match the particular operation, and $v$ is the expected result. For example, the instantiation of this rule with $\op = {+}$ is:
+\item Rule OP: $n$ is the arity of the operation~$\op$, the types of the
+values $v_1,\ldots,v_n$ match the particular operation, and $v$ is the
+expected result. For example, the instantiation of this rule with $\op =
+{+}$ is:
 \[
 \infer[\mathrm{OP}{+}]{\eval{{+}(t_1,t_2)}{E}{C_1 + C_2}}{\eval{t_1}{E}{C_1} & \eval{t_2}{E}{C_2}}
 \]
@@ -177,20 +247,49 @@ Additional requirements:
     \item $E'(x_i) = \closure{E'}{\lambda \_ . t_i'}$,
     \item $E'(y) = E(y)$ for $y \notin \{x_1,\ldots,x_k\}$.
     \end{itemize}
-    Note that~$E'$ is not a finite object -- its definition is not well-founded. Formally, one would define~$E'$ using coinduction. To avoid excessive technicalities, we refrain from elaborating on this point any further. The above specification of~$E'$ is clear enough for our purposes.
+    Note that~$E'$ is not a finite object -- its definition is not
+    well-founded. Formally, one would define~$E'$ using coinduction. To
+    avoid excessive technicalities, we refrain from elaborating on this
+    point any further. The above specification of~$E'$ is clear enough for
+    our purposes.
 
-    The point with changing $x_i$ to $x_i \Dynamic$ and $t_i$ in $E'(x_i)$ to $\lambda \_ . t_i'$, is to delay the evaluation of~$t_i$ in a closure, so that it can be used with other rules. For example, consider $t = \sletrec{x := {+}(3,4); y := x}{y}$. If we defined $E'(x) = \closure{E'}{{+}(3,4)}$, we would get $\eval{x}{E'}{\closure{E'}{{+}(3,4)}}$ and since $v_y = \closure{E'}{{+}(3,4)}$ is already a value, that would become the result of evaluating~$t$ (which is the result of evaluating~$y$ in $E[y:=v_y,x:=\ldots]$. With our approach we take $E'(x) = \closure{E'}{\lambda \_ . {+}(3,4)}$, and we have $\eval{x\Dynamic}{E'}{7}$ according to the rules.
+    The point with changing $x_i$ to $x_i \Dynamic$ and $t_i$ in $E'(x_i)$
+    to $\lambda \_ . t_i'$, is to delay the evaluation of~$t_i$ in a
+    closure, so that it can be used with other rules. For example, consider
+    $t = \sletrec{x := {+}(3,4); y := x}{y}$. If we defined $E'(x) =
+    \closure{E'}{{+}(3,4)}$, we would get
+    $\eval{x}{E'}{\closure{E'}{{+}(3,4)}}$ and since $v_y =
+    \closure{E'}{{+}(3,4)}$ is already a value, that would become the
+    result of evaluating~$t$ (which is the result of evaluating~$y$ in
+    $E[y:=v_y,x:=\ldots]$. With our approach we take $E'(x) =
+    \closure{E'}{\lambda \_ . {+}(3,4)}$, and we have
+    $\eval{x\Dynamic}{E'}{7}$ according to the rules.
 \end{itemize}
 
 \subsection{Type system}\label{sec_type_system}
 
-\JuvixCore{} does not specify a single type system by itself. Instead, different type systems can be implemented on top of \JuvixCore{}. Evaluation does not depend on type information. All type annotations can be set to~$\Dynamic$ to represent an untyped program.
+\JuvixCore{} does not specify a single type system by itself. Instead,
+different type systems can be implemented on top of \JuvixCore{}.
+Evaluation does not depend on type information. All type annotations can be
+set to~$\Dynamic$ to represent an untyped program.
 
-Currently, programs translated from Juvix to \JuvixCore{} are all well-typed in a polymorphic type system specified by the rules below. This type system is based on Church-style System~F (the polymorphic lambda calculus $\lambda2$). See~\cite[Section~5]{lambda-calculi-with-types}.
+Currently, programs translated from Juvix to \JuvixCore{} are all
+well-typed in a polymorphic type system specified by the rules below. This
+type system is based on Church-style System~F (the polymorphic lambda
+calculus $\lambda2$). See~\cite[Section~5]{lambda-calculi-with-types}.
 
-The typing rules are with respect to a fixed \JuvixCore{} program $\Pc = (f_m, \Fc, \Tc, \Ic)$. The judgements have the form $\Gamma \proves t : \tau$ where~$\Gamma$ is a set of declarations $x : \tau$ assigning types to free variables. By $\Gamma, x : \tau$ we denote $\Gamma \uplus \{x : \tau\}$ ($\uplus$ is disjoint set sum).
+The typing rules are with respect to a fixed \JuvixCore{} program $\Pc =
+(f_m, \Fc, \Tc, \Ic)$. The judgements have the form $\Gamma \proves t :
+\tau$ where~$\Gamma$ is a set of declarations $x : \tau$ assigning types to
+free variables. By $\Gamma, x : \tau$ we denote $\Gamma \uplus \{x :
+\tau\}$ ($\uplus$ is disjoint set sum).
 
-Inductive types can only have parameters which are types, i.e., the arity of any inductive type~$I$ has the form $\tau_I = \Type \to \ldots \to \Type \to \Type$ with $n_I$ arguments of type $\Type$. Recall that $\Type = \Type_0$. By $n_I$ we denote the number of parameters of~$I$. We assume there exists a fixed inductive type $\Bool$ with two constructors $\true$ and $\false$.
+Inductive types can only have parameters which are types, i.e., the arity
+of any inductive type~$I$ has the form $\tau_I = \Type \to \ldots \to \Type
+\to \Type$ with $n_I$ arguments of type $\Type$. Recall that $\Type =
+\Type_0$. By $n_I$ we denote the number of parameters of~$I$. We assume
+there exists a fixed inductive type $\Bool$ with two constructors $\true$
+and $\false$.
 
 Typing rules:
 
@@ -228,24 +327,68 @@ Typing rules:
 
 Additional requirements:
 \begin{itemize}
-\item Rule OP: $n$ is the arity of the operation~$\op$ and the types match the particular operation, e.g., for $\op = {<}$ we have $n=2$, $\tau_1=\tau_2=\Int$ and $\tau=\Bool$.
+\item Rule OP: $n$ is the arity of the operation~$\op$ and the types match
+the particular operation, e.g., for $\op = {<}$ we have $n=2$,
+$\tau_1=\tau_2=\Int$ and $\tau=\Bool$.
 \end{itemize}
 
 \section{JuvixCore implementation}\label{sec_core_implementation}
 
-The \JuvixCore{} data structure is defined in the Juvix compiler sources in the \texttt{Juvix.Compiler.Core.Language} and \texttt{Juvix.Compiler.Core.Language.Nodes} modules. The implementation follows closely the abstract definition of terms in Section~\ref{sec_syntax}. \JuvixCore{} programs $\Pc = (f_m,\Fc,\Tc,\Ic)$, which specify function bodies and inductive type constructors, are represented by the \texttt{InfoTable} data structure from the \texttt{Juvix.Compiler.Core.Data.InfoTable} module.
+The \JuvixCore{} data structure is defined in the Juvix compiler sources in
+the \texttt{Juvix.Compiler.Core.Language} and
+\texttt{Juvix.Compiler.Core.Language.Nodes} modules. The implementation
+follows closely the abstract definition of terms in
+Section~\ref{sec_syntax}. \JuvixCore{} programs $\Pc = (f_m,\Fc,\Tc,\Ic)$,
+which specify function bodies and inductive type constructors, are
+represented by the \texttt{InfoTable} data structure from the
+\texttt{Juvix.Compiler.Core.Data.InfoTable} module.
 
-In our treatment of binders we have elided the issues with renaming and variable capture, working implicitly up to $\alpha$-conversion as is standard in textual presentations of lambda-calculi. In the implementation, we use de Bruijn indices to represent binders. The use of de Bruijn indices is common in implementations of dependently typed programming languages and proof assistants. The main advantage is that a de Bruijn representation enables direct manipulation of terms under binders, with overall linear time complexity for most term transformations. Alternative approaches require either repeated renaming of bound variables, substitution or abstraction of free symbols -- all of these are linear time operations which when performed repeatedly while processing a single term may result in quadratic runtime. A major disadvantage is that manipulating de Bruijn indices is error-prone. We try to mitigate this by implementing high-level recursors which fold or transform \JuvixCore{} terms while taking care of de Bruijn index adjustments under the hood.
+In our treatment of binders we have elided the issues with renaming and
+variable capture, working implicitly up to $\alpha$-conversion as is
+standard in textual presentations of lambda-calculi. In the implementation,
+we use de Bruijn indices to represent binders. The use of de Bruijn indices
+is common in implementations of dependently typed programming languages and
+proof assistants. The main advantage is that a de Bruijn representation
+enables direct manipulation of terms under binders, with overall linear
+time complexity for most term transformations. Alternative approaches
+require either repeated renaming of bound variables, substitution or
+abstraction of free symbols -- all of these are linear time operations
+which when performed repeatedly while processing a single term may result
+in quadratic runtime. A major disadvantage is that manipulating de Bruijn
+indices is error-prone. We try to mitigate this by implementing high-level
+recursors which fold or transform \JuvixCore{} terms while taking care of
+de Bruijn index adjustments under the hood.
 
-The \JuvixCore{} evaluator is implemented in the \texttt{Juvix.Compiler.Core.Evaluator} module. The evaluator directly implements the rules from Section~\ref{sec_evaluation}, using lists to represent environments. 
+The \JuvixCore{} evaluator is implemented in the
+\texttt{Juvix.Compiler.Core.Evaluator} module. The evaluator directly
+implements the rules from Section~\ref{sec_evaluation}, using lists to
+represent environments. 
 
-Currently, no type checker is implemented for \JuvixCore{}. Those \JuvixCore{} programs which are translations of Juvix front-end programs are assumed to be well-typed in the type system of Section~\ref{sec_type_system}. This is guaranteed by the desugaring process but not checked separately. The module \texttt{Juvix.Compiler.Core.Transformation.ComputeTypeInfo} implements type inference for already well-typed terms.
+Currently, no type checker is implemented for \JuvixCore{}. Those
+\JuvixCore{} programs which are translations of Juvix front-end programs
+are assumed to be well-typed in the type system of
+Section~\ref{sec_type_system}. This is guaranteed by the desugaring process
+but not checked separately. The module
+\texttt{Juvix.Compiler.Core.Transformation.ComputeTypeInfo} implements type
+inference for already well-typed terms.
 
-\JuvixCore{} programs can be parsed and evaluated by the Juvix compiler directly, either from \texttt{*.jvc} files (\texttt{juvix dev core eval}) or via the \JuvixCore{} REPL (\texttt{juivx dev core repl}). See the \texttt{tests/Core/positive} directory in the Juvix compiler sources for examples of \texttt{*.jvc} files and the concrete \JuvixCore{} syntax.
+\JuvixCore{} programs can be parsed and evaluated by the Juvix compiler
+directly, either from \texttt{*.jvc} files (\texttt{juvix dev core eval})
+or via the \JuvixCore{} REPL (\texttt{juivx dev core repl}). See the
+\texttt{tests/Core/positive} directory in the Juvix compiler sources for
+examples of \texttt{*.jvc} files and the concrete \JuvixCore{} syntax.
 
 \section{Juvix compilation pipeline}\label{sec_pipeline}
 
-The \JuvixCore{} language is an intermediate language to which the Juvix front-end language desugars. There are, in fact, several different variants of \JuvixCore{} in the actual implementation. The variant we presented in Section~\ref{sec_specification} is suitable for evaluation, with pattern matching already compiled to case-expressions. This form of the \JuvixCore{} language corresponds to the Core data structures after performing the \texttt{toEvalTransformations} transformations (see module \texttt{Juvix.Compiler.Core.Data.TransformationId}), which is the point at which the pipelines for different backends split.
+The \JuvixCore{} language is an intermediate language to which the Juvix
+front-end language desugars. There are, in fact, several different variants
+of \JuvixCore{} in the actual implementation. The variant we presented in
+Section~\ref{sec_specification} is suitable for evaluation, with pattern
+matching already compiled to case-expressions. This form of the
+\JuvixCore{} language corresponds to the Core data structures after
+performing the \texttt{toEvalTransformations} transformations (see module
+\texttt{Juvix.Compiler.Core.Data.TransformationId}), which is the point at
+which the pipelines for different backends split.
 
 Below we present an overview of the Juvix compiler pipeline.
 
@@ -260,25 +403,36 @@ Below we present an overview of the Juvix compiler pipeline.
 
 \section{Comparison with other languages}\label{sec_comparison}
 
-In the table below we provide a short comparison of language features supported by Juvix, \JuvixCore{}, Haskell and OCaml. In the case of \JuvixCore{}, which does not specify a single type system, the ``Yes'' entries in the rows for polymorphism and data types mean that programs using these features can be directly represented in \JuvixCore{}, not that type checking of such programs is performed by the current \JuvixCore{} implementation.
+In the table below we provide a short comparison of language features
+supported by Juvix, \JuvixCore{}, Haskell and OCaml. In the case of
+\JuvixCore{}, which does not specify a single type system, the ``Yes''
+entries in the rows for polymorphism and data types mean that programs
+using these features can be directly represented in \JuvixCore{}, not that
+type checking of such programs is performed by the current \JuvixCore{}
+implementation.
 
 \vspace*{2mm}
 \begin{minipage}[b]{\hsize}\centering
 
 \begin{tabular}{lllll}
 \hline
-\textbf{Feature} & \textbf{\Juvix{}} & \textbf{\JuvixCore{}} & \textbf{Haskell} & \textbf{OCaml} \\ \hline
+\textbf{Feature} & \textbf{\Juvix{}} & \textbf{\JuvixCore{}} &
+\textbf{Haskell} & \textbf{OCaml} \\ \hline
 Algebraic data types  &  Yes   &  Yes   &  Yes  & Yes \\
 GADTs  &  No   &  Yes   &  Yes &  Yes  \\
 Prenex polymorphism  &  Yes   &  Yes &  Yes  &  Yes \\
-Higher-rank polymorphism  &  Some   &  Yes   &  Yes\footnote{with the \texttt{RankNTypes} extension}  &   No  \\
+Higher-rank polymorphism  &  Some   &  Yes   &  Yes\footnote{with the
+\texttt{RankNTypes} extension}  &   No  \\
 Hindley-Milner type inference & No & No & Yes & Yes \\
 Type classes  &  No   &  No   &  Yes &   No \\
 Modules  &  Yes   &  No   &  Yes &   Yes \\
 Parameterised modules  &  No   &  No   &  No &   Yes \\
-Eager evaluation  &  Yes   &  Yes   &  Yes\footnote{via strictness annotations} &   Yes \\
-Lazy evaluation  &  No  &  No &  Yes &   Yes\footnote{via the \texttt{Lazy.t} type} \\
-Metaprogramming  &  No   &  No   &  Yes\footnote{via Template Haskell} &  Yes\footnote{via PPXs} \\
+Eager evaluation  &  Yes   &  Yes   &  Yes\footnote{via strictness
+annotations} &   Yes \\
+Lazy evaluation  &  No  &  No &  Yes &   Yes\footnote{via the
+\texttt{Lazy.t} type} \\
+Metaprogramming  &  No   &  No   &  Yes\footnote{via Template Haskell} &
+Yes\footnote{via PPXs} \\
 \hline
 \end{tabular}
 \end{minipage}
@@ -286,7 +440,11 @@ Metaprogramming  &  No   &  No   &  Yes\footnote{via Template Haskell} &  Yes\fo
 
 \section*{Acknowledgements}
 
-The author thanks the entire Juvix team, including Jonathan Prieto-Cubides, Jan Mas Rovira and Paul Cadman. The initial design and preliminary implementation of \JuvixCore{} were by the author, but subsequent discussions with the rest of the Juvix team had a decisive impact on the final form of \JuvixCore{} presented in this report.
+The author thanks the entire Juvix team, including Jonathan Prieto-Cubides,
+Jan Mas Rovira and Paul Cadman. The initial design and preliminary
+implementation of \JuvixCore{} were by the author, but subsequent
+discussions with the rest of the Juvix team had a decisive impact on the
+final form of \JuvixCore{} presented in this report.
 
 \nocite{*}
 \bibliography{ref.bib}

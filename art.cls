@@ -253,8 +253,8 @@
   makecell,                                   % multilined table cells
   tabularx,                                   % width-expanding column (with 'x')
   multirow,                                   % for multirow cells (with \\)
-  colortbl,                                    % to add colours to table cells,
-  xypic
+  colortbl,                                   % to add colours to table cells,
+  xypic,                                      % for commutative diagrams
   % colortblarray,
   % array,                                      % for better column definitions 
 }
@@ -524,7 +524,7 @@ x}
       }}}%
       \vcenter{%  
         {\Large
-        \textit{\textbf{Anoma Research Topics}}} | \textsf{Technical Report}
+        \textit{\textbf{Anoma Research Topics}}} | \textsf{\arttype{}}
       }$ 
       % \hrule 
       }                            % article type  
