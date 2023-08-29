@@ -15,37 +15,35 @@
 
 \section{Introduction}
 
-Juvix\footnote{\url{https://github.com/anoma/juvix}} is an open-source
-functional programming language designed for writing privacy-preserving
-decentralised applications. Using Juvix, developers can write high-level
-programs which can be compiled to WASM directly, or through
-\VampIR\footnote{\url{https://github.com/anoma/vamp-ir}} to circuits for
-private execution with Taiga\footnote{\url{https://github.com/anoma/taiga}}
+\Juvix{} is an open-source
+functional programming language designed to write privacy-preserving
+decentralised applications~\citep{anoma-juvix}. Using \Juvix{}, developers can write high-level
+programs which can be compiled to WebAssembly (WASM) directly, or to circuits 
+via \VampIR{}~\citep{anoma-vampir,juvix-to-vampir} or \Geb{}~\citep{anoma-geb, geb-pipeline} for
+private execution 
+within Taiga\footnote{\url{https://github.com/anoma/taiga}}
 on Anoma\footnote{\url{https://anoma.net}} or
 Ethereum\footnote{\url{https://ethereum.org}}.
 
 \JuvixCore{} is a minimalistic intermediate functional language to which
-Juvix desugars. The relationship between Juvix and \JuvixCore{} is similar
-to that between Haskell and Haskell Core. After parsing, scoping and
-type-checking, the Juvix front-end program representation is translated to
+\Juvix{} desugars. The relationship between Juvix and \JuvixCore{} is similar
+to that between Haskell and Haskell Core. After parsing, scoping, and
+type-checking, the \Juvix{} front-end program representation is translated to
 \JuvixCore{} for further processing. Via different backends, \JuvixCore{}
-can be compiled to several targets:
-\Geb{}\footnote{\url{https://github.com/anoma/geb}}, \VampIR, WASM, native
+can be compiled to several targets including 
+\Geb{}, \VampIR{}, WASM, and native
 executable.
 
 The main part of this report is a precise and abstract specification of the
-\JuvixCore{} language (Section~\ref{sec_specification}), including the
-evaluation semantics and the optional type system. Then, we discuss the
-implementation of \JuvixCore{} and its relation to the formal specification
-(Section~\ref{sec_core_implementation}). In Section~\ref{sec_pipeline}, we
-describe the Juvix compilation pipeline and the role of \JuvixCore{} in it.
-Finally, Section~\ref{sec_comparison} compares \JuvixCore{} language
-features with those of Juvix and other popular functional languages.
+\JuvixCore{} language in \Cref{sec_specification}, including the
+evaluation semantics and the optional type system. Then in \Cref{sec_core_implementation} we discuss the
+implementation of \JuvixCore{} and its relation to the formal specification. The \Juvix{} compilation process and the role \JuvixCore{} plays in it are discussed in~\Cref{sec_pipeline}.
+Finally, \Cref{sec_comparison} compares the features of the \JuvixCore{} language with those of \Juvix{} and other popular functional languages.
 
 \section{JuvixCore specification}\label{sec_specification}
 
 In this section, we provide a precise and abstract specification of
-\JuvixCore{}. We specify the syntax, evaluation semantics and the current
+\JuvixCore{}. We specify the syntax, evaluation semantics, and the current
 optional type system.
 
 \subsection{Syntax}\label{sec_syntax}
@@ -72,7 +70,10 @@ to indicate that $c$ (of type~$\tau$) is a constructor in the inductive
 type~$I$.
 
 \emph{Terms}~$t,s,r$ are defined by the following grammar. The
-\emph{types}~$\tau,\sigma$ are just arbitrary terms.
+\emph{types}~$\tau,\sigma$ are arbitrary terms.
+
+
+\begin{figure}[H]
 \[
 \begin{array}{rcl}
 t, s, r, \tau, \sigma &::=& x \\
@@ -95,6 +96,10 @@ t, s, r, \tau, \sigma &::=& x \\
   & \mid & \Dynamic
 \end{array}
 \]
+\caption{\JuvixCore{} syntax grammar.}
+\label{fig:grammar}
+\end{figure}
+
 We explain the above grammar point by point.
 \begin{itemize}
 \item $x$ is a variable.
@@ -198,7 +203,7 @@ is either a value~$v$ or an error~$\bot$. The evaluation relation is
 implicitly parameterised by a fixed \JuvixCore{} program $\Pc = (f_m, \Fc,
 \Tc, \Ic)$. The evaluation strategy is eager (call-by-value).
 
-Evaluation rules:
+\begin{figure}[H]
 \[
 \begin{array}{c}
 \infer{\eval{x}{E}{E(x)}}{}\quad
@@ -231,6 +236,9 @@ Evaluation rules:
 \infer{\eval{t}{E}{\bot}}{\text{no other rule applies}}
 \end{array}
 \]
+\caption{\JuvixCore{} evaluation rules.}
+\label{fig:evaluation}
+\end{figure}
 
 Additional requirements:
 \begin{itemize}
@@ -247,13 +255,18 @@ expected result. For example, the instantiation of this rule with $\op =
     \item $E'(x_i) = \closure{E'}{\lambda \_ . t_i'}$,
     \item $E'(y) = E(y)$ for $y \notin \{x_1,\ldots,x_k\}$.
     \end{itemize}
-    Note that~$E'$ is not a finite object -- its definition is not
-    well-founded. Formally, one would define~$E'$ using coinduction. To
-    avoid excessive technicalities, we refrain from elaborating on this
+\end{itemize}
+
+\begin{remark}
+Note that~$E'$ in the second point above is not a finite object -- its definition is not
+well-founded. Formally, one would define~$E'$ using coinduction. To
+avoid excessive technicalities, we refrain from elaborating on this
     point any further. The above specification of~$E'$ is clear enough for
     our purposes.
+\end{remark}
 
-    The point with changing $x_i$ to $x_i \Dynamic$ and $t_i$ in $E'(x_i)$
+\begin{remark}
+    In the second point above, the purpose of changing $x_i$ to $x_i \Dynamic$ and $t_i$ in $E'(x_i)$
     to $\lambda \_ . t_i'$, is to delay the evaluation of~$t_i$ in a
     closure, so that it can be used with other rules. For example, consider
     $t = \sletrec{x := {+}(3,4); y := x}{y}$. If we defined $E'(x) =
@@ -264,7 +277,7 @@ expected result. For example, the instantiation of this rule with $\op =
     $E[y:=v_y,x:=\ldots]$. With our approach we take $E'(x) =
     \closure{E'}{\lambda \_ . {+}(3,4)}$, and we have
     $\eval{x\Dynamic}{E'}{7}$ according to the rules.
-\end{itemize}
+\end{remark}
 
 \subsection{Type system}\label{sec_type_system}
 
@@ -284,15 +297,14 @@ The typing rules are with respect to a fixed \JuvixCore{} program $\Pc =
 free variables. By $\Gamma, x : \tau$ we denote $\Gamma \uplus \{x :
 \tau\}$ ($\uplus$ is disjoint set sum).
 
-Inductive types can only have parameters which are types, i.e., the arity
+Inductive types can only have type parameters, i.e., the arity
 of any inductive type~$I$ has the form $\tau_I = \Type \to \ldots \to \Type
 \to \Type$ with $n_I$ arguments of type $\Type$. Recall that $\Type =
-\Type_0$. By $n_I$ we denote the number of parameters of~$I$. We assume
+\Type_0$. By $n_I$ we denote the number of parameters of~$I$. We assume that
 there exists a fixed inductive type $\Bool$ with two constructors $\true$
 and $\false$.
 
-Typing rules:
-
+\begin{figure}[H]
 \[
 \begin{array}{c}
 \infer{\Gamma, x : \tau \proves x : \tau}{}\quad
@@ -324,12 +336,15 @@ Typing rules:
 \infer{\Gamma \proves \Dynamic : \Type}{}
 \end{array}
 \]
+\caption{\JuvixCore{} optional typing rules.}
+\label{fig:typing}
+\end{figure}
 
 Additional requirements:
 \begin{itemize}
 \item Rule OP: $n$ is the arity of the operation~$\op$ and the types match
-the particular operation, e.g., for $\op = {<}$ we have $n=2$,
-$\tau_1=\tau_2=\Int$ and $\tau=\Bool$.
+the particular operation, e.g., if $\op$ is $(<)$, we have that $n$ is $2$, both
+$\tau_1$ and $\tau_2$ are $\Int$, and $\tau$ is $\Bool$.
 \end{itemize}
 
 \section{JuvixCore implementation}\label{sec_core_implementation}
@@ -337,11 +352,13 @@ $\tau_1=\tau_2=\Int$ and $\tau=\Bool$.
 The \JuvixCore{} data structure is defined in the Juvix compiler sources in
 the \texttt{Juvix.Compiler.Core.Language} and
 \texttt{Juvix.Compiler.Core.Language.Nodes} modules. The implementation
-follows closely the abstract definition of terms in
-Section~\ref{sec_syntax}. \JuvixCore{} programs $\Pc = (f_m,\Fc,\Tc,\Ic)$,
+follows closely the abstract definition of terms in~\Cref{sec_syntax}. \JuvixCore{} programs $\Pc = (f_m,\Fc,\Tc,\Ic)$,
 which specify function bodies and inductive type constructors, are
 represented by the \texttt{InfoTable} data structure from the
-\texttt{Juvix.Compiler.Core.Data.InfoTable} module.
+\texttt{Juvix.Compiler.Core.Data.InfoTable} module. The \JuvixCore{} evaluator is implemented in the
+\texttt{Juvix.Compiler.Core.Evaluator} module. The evaluator directly
+implements the rules from~\Cref{sec_evaluation} using lists to
+represent environments. 
 
 In our treatment of binders we have elided the issues with renaming and
 variable capture, working implicitly up to $\alpha$-conversion as is
@@ -359,22 +376,17 @@ indices is error-prone. We try to mitigate this by implementing high-level
 recursors which fold or transform \JuvixCore{} terms while taking care of
 de Bruijn index adjustments under the hood.
 
-The \JuvixCore{} evaluator is implemented in the
-\texttt{Juvix.Compiler.Core.Evaluator} module. The evaluator directly
-implements the rules from Section~\ref{sec_evaluation}, using lists to
-represent environments. 
-
-Currently, no type checker is implemented for \JuvixCore{}. Those
+No type checker is implemented for \JuvixCore{}. Those
 \JuvixCore{} programs which are translations of Juvix front-end programs
-are assumed to be well-typed in the type system of
-Section~\ref{sec_type_system}. This is guaranteed by the desugaring process
-but not checked separately. The module
-\texttt{Juvix.Compiler.Core.Transformation.ComputeTypeInfo} implements type
-inference for already well-typed terms.
+are assumed to be well-typed in the type system described in~\Cref{sec_type_system}. This is guaranteed by the desugaring process
+but not checked separately. We implement 
+type
+inference for already well-typed terms in the module
+\texttt{Juvix.Compiler.Core.Transformation.ComputeTypeInfo}.
 
 \JuvixCore{} programs can be parsed and evaluated by the Juvix compiler
 directly, either from \texttt{*.jvc} files (\texttt{juvix dev core eval})
-or via the \JuvixCore{} REPL (\texttt{juivx dev core repl}). See the
+or via the \JuvixCore{} REPL (\texttt{juvix dev core repl}). See the
 \texttt{tests/Core/positive} directory in the Juvix compiler sources for
 examples of \texttt{*.jvc} files and the concrete \JuvixCore{} syntax.
 
@@ -382,16 +394,15 @@ examples of \texttt{*.jvc} files and the concrete \JuvixCore{} syntax.
 
 The \JuvixCore{} language is an intermediate language to which the Juvix
 front-end language desugars. There are, in fact, several different variants
-of \JuvixCore{} in the actual implementation. The variant we presented in
-Section~\ref{sec_specification} is suitable for evaluation, with pattern
+of \JuvixCore{} in the actual implementation. The variant we present
+in~\Cref{sec_specification} is suitable for evaluation, with pattern
 matching already compiled to case-expressions. This form of the
 \JuvixCore{} language corresponds to the Core data structures after
-performing the \texttt{toEvalTransformations} transformations (see module
+performing the \texttt{toEval} transformations (see module
 \texttt{Juvix.Compiler.Core.Data.TransformationId}), which is the point at
-which the pipelines for different backends split.
+which the pipelines for different backends diverge. An overview of the Juvix compiler pipeline is depicted in~\Cref{fig:juvix-pipeline}.
 
-Below we present an overview of the Juvix compiler pipeline.
-
+\begin{figure}[H]
 \[
 \xymatrix{
 & & & & & & \text{WASM} \\
@@ -400,51 +411,55 @@ Below we present an overview of the Juvix compiler pipeline.
 & & & & & & \VampIR
 }
 \]
+\caption{Juvix compiler pipeline.}
+\label{fig:juvix-pipeline}
+\end{figure}
 
 \section{Comparison with other languages}\label{sec_comparison}
 
-In the table below we provide a short comparison of language features
-supported by Juvix, \JuvixCore{}, Haskell and OCaml. In the case of
+We provide a short comparison of language features
+supported by Juvix, \JuvixCore{}, Haskell, and OCaml in~\Cref{tab:comparison}. In the case of
 \JuvixCore{}, which does not specify a single type system, the ``Yes''
 entries in the rows for polymorphism and data types mean that programs
 using these features can be directly represented in \JuvixCore{}, not that
 type checking of such programs is performed by the current \JuvixCore{}
-implementation.
+implementation. 
 
-\vspace*{2mm}
-\begin{minipage}[b]{\hsize}\centering
-
+\begin{center}
+\captionof{table}{Comparison between language features
+supported by Juvix, \JuvixCore{}, Haskell and OCaml.}
+\label{tab:comparison}
 \begin{tabular}{lllll}
-\hline
+\toprule
 \textbf{Feature} & \textbf{\Juvix{}} & \textbf{\JuvixCore{}} &
-\textbf{Haskell} & \textbf{OCaml} \\ \hline
+\textbf{Haskell} & \textbf{OCaml} \\ \toprule
+Turing-complete  &  Yes\footnote{via \texttt{terminating} and \texttt{positive} annotations}   &  Yes   &  Yes  & Yes \\
 Algebraic data types  &  Yes   &  Yes   &  Yes  & Yes \\
 GADTs  &  No   &  Yes   &  Yes &  Yes  \\
 Prenex polymorphism  &  Yes   &  Yes &  Yes  &  Yes \\
 Higher-rank polymorphism  &  Some   &  Yes   &  Yes\footnote{with the
-\texttt{RankNTypes} extension}  &   No  \\
+\texttt{RankNTypes} extension.}  &   No  \\
 Hindley-Milner type inference & No & No & Yes & Yes \\
 Type classes  &  No   &  No   &  Yes &   No \\
 Modules  &  Yes   &  No   &  Yes &   Yes \\
 Parameterised modules  &  No   &  No   &  No &   Yes \\
 Eager evaluation  &  Yes   &  Yes   &  Yes\footnote{via strictness
-annotations} &   Yes \\
+annotations.} &   Yes \\
 Lazy evaluation  &  No  &  No &  Yes &   Yes\footnote{via the
-\texttt{Lazy.t} type} \\
+\texttt{Lazy.t} type.} \\
 Metaprogramming  &  No   &  No   &  Yes\footnote{via Template Haskell} &
-Yes\footnote{via PPXs} \\
-\hline
+Yes\footnote{via PPXs.} \\
+\bottomrule
 \end{tabular}
-\end{minipage}
-
+\end{center}
 
 \section*{Acknowledgements}
 
 The author thanks the entire Juvix team, including Jonathan Prieto-Cubides,
 Jan Mas Rovira and Paul Cadman. The initial design and preliminary
-implementation of \JuvixCore{} were by the author, but subsequent
+implementation of \JuvixCore{} were done by the author, but subsequent
 discussions with the rest of the Juvix team had a decisive impact on the
-final form of \JuvixCore{} presented in this report.
+final form of \JuvixCore{} presented in this report. The author thanks Jonathan Prieto-Cubides for reviewing this report.
 
 \nocite{*}
 \bibliography{ref.bib}
